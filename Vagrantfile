@@ -34,6 +34,16 @@ Vagrant.configure("2") do |config|
     microk8s_a.vm.provision "shell", inline: <<-EOF
       export local_ip="$(ip route | grep default | grep enp0s8 | cut -d' ' -f9)"
       microk8s.add-node | grep $local_ip | tee /vagrant/add_k8s
+      mkdir -p ~/minio/data
+      docker run \
+        -p 9000:9000 \
+        -p 9000:9000 \
+        --name minio1 \
+        -v ~/minio/data:/data \
+        -e "MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE" \
+        -e "MINIO_ROOT_PASSWORD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" \
+        quay.io/minio/minio server /data --console-address ":9000"
+
     EOF
   end
   config.vm.define "microk8s_b" do |microk8s_b|
@@ -42,6 +52,10 @@ Vagrant.configure("2") do |config|
       vb.name = "microk8s-b"
     end
     microk8s_b.vm.provision "shell", inline: <<-EOF
+      apt-get install python3.8
+      apt install python3-pip
+      pip install boto3
+      pip3 install minio
       bash -x /vagrant/add_k8s
     EOF
   end
